@@ -76,8 +76,8 @@ class PointCloud:
         pcd_pca = pca.fit_transform(self.points)
 
         if return_PCA:
-            return PointCloud(points=pcd_pca, labels=self.labels), pca
-        return PointCloud(points=pcd_pca, labels=self.labels)
+            return PointCloud(points=pcd_pca), pca
+        return PointCloud(points=pcd_pca)
 
     def sample(self, reduction_factor=100):
         """
@@ -90,11 +90,10 @@ class PointCloud:
         !!! Only use for test purposes !!!
         """
 
-        return PointCloud(points=self.points[::reduction_factor],
-                          labels=self.labels[::reduction_factor])
+        return PointCloud(points=self.points[::reduction_factor])
 
     def mask(self, mask):
-        return PointCloud(points=self.points[mask, :], labels=self.labels[mask])
+        return PointCloud(points=self.points[mask, :])
 
     def getCentroid(self):
         return np.mean(self.points, axis=0)
@@ -107,9 +106,8 @@ class PointCloud:
         """
 
         merged_points = np.vstack((self.points, pointcloud.points))
-        merged_labels = np.concatenate((self.labels, pointcloud.labels))
 
-        return PointCloud(points=merged_points, labels=merged_labels)
+        return PointCloud(points=merged_points)
 
     def copy(self):
         return deepcopy(self)
