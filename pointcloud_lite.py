@@ -22,14 +22,8 @@ class PointCloud:
 
 
         """
-        if ply_path != None:
-            pcd = o3d.io.read_point_cloud(ply_path)
 
-        else:
-            pcd = o3d.geometry.PointCloud(points=o3d.utility.Vector3dVector(points))
-
-        self.pcd = pcd
-        self.arr = np.asarray(pcd.points);
+        self.arr = np.asarray(o3d.io.read_point_cloud(ply_path).points);
         self.points = self.arr.copy()
         self.points[np.isnan(self.points)] = 0
         self.X = self.points[:, 0]
