@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from copy import deepcopy
 import pandas as pd
-from polynomial_surface import polyfit2d, polyval2d, RMSE
 from tqdm import tqdm
 
 
