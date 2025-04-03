@@ -10,7 +10,7 @@ from tqdm import tqdm
 # class to hold tide data
 # -------------------------------------------------------------
 class PointCloud:
-    def __init__(self, ply_path=None, points=None, colors=None, name=None, labels=None):
+    def __init__(self, ply_path=None, points=None, name=None):
         """
 
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -24,17 +24,9 @@ class PointCloud:
         """
         if ply_path != None:
             pcd = o3d.io.read_point_cloud(ply_path)
-            self.labels = np.zeros_like(np.arange(len(np.asarray(pcd.points))))
 
         else:
             pcd = o3d.geometry.PointCloud(points=o3d.utility.Vector3dVector(points))
-            if type(colors) == np.ndarray:
-                pcd.colors = o3d.utility.Vector3dVector(colors)
-            if type(labels) != np.ndarray:
-                if labels == None:
-                    self.labels = np.zeros_like(np.arange(len(points)))
-            else:
-                self.labels = labels
 
         self.pcd = pcd
         self.arr = np.asarray(pcd.points);
@@ -45,26 +37,14 @@ class PointCloud:
         self.Z = self.points[:, 2]
 
         self.n = len(self.points)
-        self.colors = np.asarray(pcd.colors)
-        # self.colors[np.isnan(self.points)] = 0
-
-        self.color_dists = {}
-        self.point_dists = {}
-
         self.original_points = self.points.copy()
 
-        self.cluster_params = {'esp': 0.05, 'min_samples': 100}
 
-
-    def plot(self, colors=None, ax=None, plot_ax_labels=True, every_x_point=1, aspect=None, **kwargs):
+    def plot(self, ax=None, plot_ax_labels=True, every_x_point=1, aspect=None, **kwargs):
         """
         Method to plot
         :param colors: numpy array of n_points length to color the scatter markers (numpy array, Optional, defaults to the color array)
         """
-
-        if type(colors) != np.ndarray:
-            if colors == None:
-                colors = self.colors
 
         if ax:
             fig = ax.get_figure()
@@ -75,17 +55,10 @@ class PointCloud:
             fig = plt.figure()
             ax = plt.axes(projection="3d")
 
-        if len(colors.shape) > 1:
-            # ax.scatter3D(self.points[::every_x_point, 0], self.points[::every_x_point, 1], self.points[::every_x_point, 2], color=colors[::every_x_point],**kwargs)
-            ax.scatter(self.points[::every_x_point, 0], self.points[::every_x_point, 1],
-                       self.points[::every_x_point, 2], color=colors[::every_x_point], **kwargs)
-        else:
-            sc = ax.scatter3D(self.points[::every_x_point, 0], self.points[::every_x_point, 1],
-                              self.points[::every_x_point, 2], c=colors[::every_x_point], cmap='tab20', **kwargs)
-            sc = ax.scatter(self.points[::every_x_point, 0], self.points[::every_x_point, 1],
-                            self.points[::every_x_point, 2], c=colors[::every_x_point], cmap='tab20', **kwargs)
-            fig.colorbar(sc)
-
+        
+        ax.scatter(self.points[::every_x_point, 0], self.points[::every_x_point, 1],
+                       self.points[::every_x_point, 2], **kwargs)
+       
         if plot_ax_labels:
             ax.set_xlabel('X')
             ax.set_ylabel('Y')
@@ -103,8 +76,8 @@ class PointCloud:
         pcd_pca = pca.fit_transform(self.points)
 
         if return_PCA:
-            return PointCloud(points=pcd_pca, colors=self.colors, labels=self.labels), pca
-        return PointCloud(points=pcd_pca, colors=self.colors, labels=self.labels)
+            return PointCloud(points=pcd_pca, labels=self.labels), pca
+        return PointCloud(points=pcd_pca, labels=self.labels)
 
     def sample(self, reduction_factor=100):
         """
@@ -117,11 +90,11 @@ class PointCloud:
         !!! Only use for test purposes !!!
         """
 
-        return PointCloud(points=self.points[::reduction_factor], colors=self.colors[::reduction_factor],
+        return PointCloud(points=self.points[::reduction_factor],
                           labels=self.labels[::reduction_factor])
 
     def mask(self, mask):
-        return PointCloud(points=self.points[mask, :], colors=self.colors[mask, :], labels=self.labels[mask])
+        return PointCloud(points=self.points[mask, :], labels=self.labels[mask])
 
     def getCentroid(self):
         return np.mean(self.points, axis=0)
@@ -134,10 +107,9 @@ class PointCloud:
         """
 
         merged_points = np.vstack((self.points, pointcloud.points))
-        merged_colors = np.vstack((self.colors, pointcloud.colors))
         merged_labels = np.concatenate((self.labels, pointcloud.labels))
 
-        return PointCloud(points=merged_points, colors=merged_colors, labels=merged_labels)
+        return PointCloud(points=merged_points, labels=merged_labels)
 
     def copy(self):
         return deepcopy(self)
@@ -149,7 +121,6 @@ class PointCloud:
         """
 
         pcd = o3d.geometry.PointCloud(points=o3d.utility.Vector3dVector(self.points))
-        pcd.colors = o3d.utility.Vector3dVector(self.colors)
         o3d.io.write_point_cloud(fn, pcd)
 
     def normalize(self):
